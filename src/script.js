@@ -10,6 +10,7 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 const canvas = document.querySelector("canvas.webgl");
 // canvas.
 
+
 let bool = false;
 const btn = document.createElement("div");
 btn.innerText = "시점변경";
@@ -18,7 +19,7 @@ btn.addEventListener("click", () => {
   if (bool) {
     // tps
     // OrbitControls
-    camera.position.set(mesh.position.x, 0.5, mesh.position.z + 2);
+    camera.position.set(mesh.position.x, 2, mesh.position.z + 3);
   } else {
     // fps
     // FirstPersonControls
@@ -31,7 +32,16 @@ document.body.appendChild(btn);
 
 // Scene
 const scene = new THREE.Scene();
-
+scene.background = new THREE.CubeTextureLoader()
+	.setPath( 'afterrain/' )
+	.load( [
+		'afterrain_ft.jpg',
+		'afterrain_bk.jpg',
+		'afterrain_up.jpg',
+		'afterrain_dn.jpg',
+		'afterrain_rt.jpg',
+		'afterrain_lf.jpg'
+	] );
 /**
  * Sizes
  */
@@ -44,7 +54,7 @@ const scene = new THREE.Scene();
  * Camera
  */
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height);
-camera.position.set(0, 1, -2);
+camera.position.set(0, 2, 3);
 scene.add(camera);
 
 
@@ -77,11 +87,11 @@ const clock = new THREE.Clock();
 /**
  * Object
  */
-// const geometry = new THREE.BoxGeometry(1, 1, 1);
-// const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-// const mesh = new THREE.Mesh(geometry, material);
-// mesh.position.y = 0.5;
-// scene.add(mesh);
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+const mesh = new THREE.Mesh(geometry, material);
+mesh.position.y = 0.5;
+scene.add(mesh);
 
 /**
  * obj loader
@@ -97,7 +107,7 @@ const clock = new THREE.Clock();
 
 };
 
-let mesh =  null;
+// let mesh =  null;
 
 new MTLLoader()
   .setPath( 'models/obj/male02/' )
@@ -108,36 +118,47 @@ new MTLLoader()
     new OBJLoader()
       .setMaterials( materials )
       .setPath( 'models/obj/male02/' )
-      .load( 'male02.obj', ( object ) =>  {
-        mesh = object;
-        // mesh.scale.set(1,1,1)
-        mesh.scale.set(0.005, 0.005, 0.005)
-        scene.add( mesh );
+      .load( 'male02.obj', async ( object ) =>  {
+        // mesh = object;
+        // mesh.scale.set(0.005, 0.005, 0.005)
+        object.scale.set(0.005, 0.005, 0.005);
+        const arr = []
+        const max = 9, min = -9;
+        for  (let i = 0; i < 7 ; i++) {
+          object.position.set(
+            Math.floor(Math.random() * (max - min + 1)) + min,
+            0,
+            Math.floor(Math.random() * (max - min + 1)) + min
+          );
+          object.rotation.set(0, Math.random() * Math.PI * 2, 0)
+          scene.add(object.clone());
+         
+        }
+       
       }, onProgress );
   } );
 
 
-
-const geometry_sphere = new THREE.SphereGeometry(0.5, 32, 16);
-const material_sphere = new THREE.MeshPhysicalMaterial({
-  color: "#0000ff",
-  metalness: 0,
-  roughness: 0.5,
-  clearcoat: 1.0,
-  clearcoatRoughness: 1.0,
-  reflectivity: 1.0
-});
-const max = 9,
-  min = -9;
-for (let i = 0; i < 7; i++) {
-  const sphere = new THREE.Mesh(geometry_sphere, material_sphere);
-  sphere.position.set(
-    Math.floor(Math.random() * (max - min + 1)) + min,
-    0.5,
-    Math.floor(Math.random() * (max - min + 1)) + min
-  );
-  scene.add(sphere);
-}
+// const geometry_sphere = new THREE.SphereGeometry(0.5, 32, 16);
+// const material_sphere = new THREE.MeshPhysicalMaterial({
+//   color: "#0000ff",
+//   metalness: 0,
+//   roughness: 0.5,
+//   clearcoat: 1.0,
+//   clearcoatRoughness: 1.0,
+//   reflectivity: 1.0
+// });
+// const max = 9,
+//   min = -9;
+// for (let i = 0; i < 7; i++) {
+//   const sphere = new THREE.Mesh(geometry_sphere, material_sphere);
+//   sphere.position.set(
+//     Math.floor(Math.random() * (max - min + 1)) + min,
+//     0.5,
+//     Math.floor(Math.random() * (max - min + 1)) + min
+//   );
+//   scene.add(sphere);
+// }
 
 const geometry_plain = new THREE.PlaneGeometry(20, 20);
 const material_plain = new THREE.MeshPhysicalMaterial({
@@ -151,6 +172,7 @@ const material_plain = new THREE.MeshPhysicalMaterial({
 });
 const plane = new THREE.Mesh(geometry_plain, material_plain);
 plane.rotation.set(Math.PI / 2, 0, 0);
+// plane.position.set(0 , 0, 0);
 scene.add(plane);
 
 /**
@@ -181,7 +203,6 @@ function getForwardVector() {
 }
 
 function getSideVector() {
-  // playerDirection : Vector3
   camera.getWorldDirection(playerDirection);
   playerDirection.y = 0;
   playerDirection.normalize();
@@ -229,12 +250,33 @@ function keyControls(deltaTime = 25) {
   }
 }
 
+function movementObj(){
+ 
+ 
+
+  scene.children.filter((obj)=>{
+    return obj.type === 'Group'
+   }).forEach( (itm) => {
+     
+   
+      //  const {} = new THREE.Vector3(x, 0.5, z);
+
+      itm.rotation.y += 0.2;
+      // itm.ro.z += z;
+   })
+}
+
 function animate() {
   const deltaTime = Math.min(0.05, clock.getDelta()) / 5;
+  
   for (let i = 0; i < 5; i++) {
     keyControls(deltaTime);
     updatePlayer(deltaTime);
   }
+  
+  // obj random position
+  movementObj()
+
   requestAnimationFrame(animate);
 
   controls.update();
